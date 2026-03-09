@@ -1,0 +1,9 @@
+# YO Arbitraj v1.0 — Dependente Python
+# Toate modulele sunt din biblioteca standard Python 3.6+
+# Nu exista dependente externe obligatorii!
+
+# Optionale - doar pentru build EXE:
+pyinstaller>=5.0
+
+# Optionale - teste:
+pytest>=7.0
