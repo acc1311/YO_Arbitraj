@@ -85,14 +85,14 @@ def parse_adif(text, filename=""):
         # Dată: YYYYMMDD → YYYY-MM-DD
         raw_date = _adif_field("QSO_DATE", rec)
         if raw_date and len(raw_date) == 8:
-            q["date"] = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:8]}"
+            q["date"] = "{}-{}-{}".format(raw_date[:4], raw_date[4:6], raw_date[6:8])
         else:
             q["date"] = raw_date
 
         # Oră: HHMMSS sau HHMM → HH:MM
         raw_time = _adif_field("TIME_ON", rec)
         if raw_time and len(raw_time) >= 4:
-            q["time"] = f"{raw_time[:2]}:{raw_time[2:4]}"
+            q["time"] = "{}:{}".format(raw_time[:2], raw_time[2:4])
         else:
             q["time"] = raw_time
 
@@ -159,7 +159,7 @@ def parse_cabrillo(text, filename=""):
         # Minimum 9 fields after QSO:
         if len(parts) < 9:
             errors.append({"line": line_no, "type": "CAB_SHORT_QSO",
-                           "message": f"Linie QSO Cabrillo incompletă ({len(parts)} câmpuri)",
+                           "message": "Linie QSO Cabrillo incompletă ({} câmpuri)".format(len(parts)),
                            "raw": raw_line[:100]})
             continue
 
@@ -174,13 +174,13 @@ def parse_cabrillo(text, filename=""):
             # date: YYYY-MM-DD
             raw_d = parts[3]
             if len(raw_d) == 8 and raw_d.isdigit():
-                q["date"] = f"{raw_d[:4]}-{raw_d[4:6]}-{raw_d[6:8]}"
+                q["date"] = "{}-{}-{}".format(raw_d[:4], raw_d[4:6], raw_d[6:8])
             else:
                 q["date"] = raw_d
             # time: HHMM → HH:MM
             raw_t = parts[4]
             if len(raw_t) == 4 and raw_t.isdigit():
-                q["time"] = f"{raw_t[:2]}:{raw_t[2:4]}"
+                q["time"] = "{}:{}".format(raw_t[:2], raw_t[2:4])
             else:
                 q["time"] = raw_t
 
@@ -243,7 +243,7 @@ def parse_csv(text, filename=""):
         headers_raw = reader.fieldnames or []
     except Exception as e:
         return [], [{"line": 1, "type": "CSV_PARSE_ERR",
-                     "message": f"Nu pot citi CSV: {e}", "raw": ""}]
+                     "message": "Nu pot citi CSV: {}".format(e), "raw": ""}]
 
     # Map header → câmp intern
     col_map = {}
@@ -278,16 +278,16 @@ def parse_csv(text, filename=""):
         # Dată: acceptă YYYYMMDD, YYYY-MM-DD, DD.MM.YYYY
         d = q["date"]
         if d and "-" not in d and "." not in d and len(d) == 8:
-            q["date"] = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+            q["date"] = "{}-{}-{}".format(d[:4], d[4:6], d[6:8])
         elif d and "." in d:
             parts = d.split(".")
             if len(parts) == 3 and len(parts[0]) == 2:
-                q["date"] = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                q["date"] = "{}-{}-{}".format(parts[2], parts[1], parts[0])
 
         # Oră: HHMM → HH:MM
         t = q["time"].replace(":", "")
         if len(t) >= 4:
-            q["time"] = f"{t[:2]}:{t[2:4]}"
+            q["time"] = "{}:{}".format(t[:2], t[2:4])
 
         if q["callsign"]:
             qsos.append(q)
@@ -322,7 +322,7 @@ def parse_json(text, filename=""):
         data = json.loads(text)
     except json.JSONDecodeError as e:
         return [], [{"line": 1, "type": "JSON_PARSE_ERR",
-                     "message": f"JSON invalid: {e}", "raw": ""}]
+                     "message": "JSON invalid: {}".format(e), "raw": ""}]
 
     # Suportă: listă directă sau dict cu cheie "log"/"qsos"
     if isinstance(data, dict):
@@ -358,11 +358,11 @@ def parse_json(text, filename=""):
         # Dată YO Log PRO: poate fi ISO sau YYYYMMDD
         d = q["date"]
         if d and len(d) == 8 and d.isdigit():
-            q["date"] = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+            q["date"] = "{}-{}-{}".format(d[:4], d[4:6], d[6:8])
 
         t = q["time"].replace(":", "")
         if len(t) >= 4:
-            q["time"] = f"{t[:2]}:{t[2:4]}"
+            q["time"] = "{}:{}".format(t[:2], t[2:4])
 
         if q["callsign"]:
             qsos.append(q)
@@ -382,7 +382,7 @@ def parse_file(filepath):
     Returnează: {
         "qsos": [...],
         "errors": [...],
-        "format": "adif"|"cabrillo"|"csv"|"json",
+        "format": "adi"|"cabrillo"|"csv"|"json",
         "header": {...},   # doar Cabrillo
         "callsign": str,   # din header Cabrillo sau filename
         "filename": str,
@@ -417,8 +417,8 @@ def parse_file(filepath):
     text_up = text[:1024].upper()
 
     # Detecție format
-    if ext in (".adi", ".adif") or "<CALL:" in text_up or "<EOH>" in text_up:
-        result["format"] = "adif"
+    if ext in (".adi", ".adi") or "<CALL:" in text_up or "<EOH>" in text_up:
+        result["format"] = "adi"
         qsos, errors = parse_adif(text, filepath)
         result["qsos"], result["errors"] = qsos, errors
 
@@ -440,7 +440,7 @@ def parse_file(filepath):
 
     else:
         # Încearcă toate formatele
-        for fmt, fn in [("adif", parse_adif), ("cabrillo", None),
+        for fmt, fn in [("adi", parse_adif), ("cabrillo", None),
                         ("csv", parse_csv), ("json", parse_json)]:
             if fmt == "cabrillo":
                 q, e, h = parse_cabrillo(text, filepath)

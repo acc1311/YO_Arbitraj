@@ -22,9 +22,9 @@ def _parse_dt(qso):
     t_clean = t.replace(":", "")
     if len(t_clean) < 4:
         return None
-    t_fmt = f"{t_clean[:2]}:{t_clean[2:4]}"
+    t_fmt = "{}:{}".format(t_clean[:2], t_clean[2:4])
     try:
-        return datetime.datetime.strptime(f"{d} {t_fmt}", "%Y-%m-%d %H:%M")
+        return datetime.datetime.strptime("{} {}".format(d, t_fmt), "%Y-%m-%d %H:%M")
     except ValueError:
         return None
 
@@ -160,7 +160,7 @@ def cross_check(log_a, log_b, call_a, call_b, tolerance_min=TOLERANCE_MINUTES):
                 dt_b   = _parse_dt(q_b)
                 if band_a != band_b:
                     result["busted_band"].append((idx_a, idx_b))
-                    issue = f"Bandă diferită: A={band_a}, B={band_b}"
+                    issue = "Bandă diferită: A={}, B={}".format(band_a, band_b)
                     detail["status"] = "busted_band"
                     detail["match_idx_b"] = idx_b
                     break
@@ -168,7 +168,7 @@ def cross_check(log_a, log_b, call_a, call_b, tolerance_min=TOLERANCE_MINUTES):
                     delta = abs(dt_a - dt_b)
                     if delta > tol:
                         result["busted_time"].append((idx_a, idx_b, round(delta.total_seconds()/60, 1)))
-                        issue = f"Diferență timp {round(delta.total_seconds()/60,1)} min (>{tolerance_min} min)"
+                        issue = "Diferență timp {} min (>{} min)".format(round(delta.total_seconds()/60,1), tolerance_min)
                         detail["status"] = "busted_time"
                         detail["match_idx_b"] = idx_b
                         break
@@ -186,7 +186,7 @@ def cross_check(log_a, log_b, call_a, call_b, tolerance_min=TOLERANCE_MINUTES):
                         if dt_a and dt_b and abs(dt_a - dt_b) > tol:
                             continue
                         result["busted_call"].append((idx_a, idx_b, q_b["callsign"]))
-                        issue = f"Posibil indicativ greșit: în log B apare '{q_b['callsign']}'"
+                        issue = "Posibil indicativ greșit: în log B apare '{}'".format(q_b['callsign'])
                         detail["status"] = "busted_call"
                         detail["match_idx_b"] = idx_b
                         break
@@ -223,7 +223,7 @@ def cross_check_all(logs, tolerance_min=TOLERANCE_MINUTES):
         for j in range(n):
             if i == j:
                 continue
-            key = f"{logs[i]['callsign']}_vs_{logs[j]['callsign']}"
+            key = "{}_vs_{}".format(logs[i]['callsign'], logs[j]['callsign'])
             matrix[key] = cross_check(
                 logs[i]["qsos"], logs[j]["qsos"],
                 logs[i]["callsign"], logs[j]["callsign"],
@@ -239,7 +239,7 @@ def cross_check_all(logs, tolerance_min=TOLERANCE_MINUTES):
         for j in range(n):
             if i == j:
                 continue
-            key = f"{call}_vs_{logs[j]['callsign']}"
+            key = "{}_vs_{}".format(call, logs[j]['callsign'])
             if key in matrix:
                 s = matrix[key]["stats"]
                 confirmed_total   += s["confirmed"]

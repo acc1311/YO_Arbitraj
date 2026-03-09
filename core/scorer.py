@@ -94,7 +94,7 @@ def _multipliers(qsos_valid, contest, qso_flags):
             dxcc  = guess_dxcc(q["callsign"])
             band  = q.get("band", "").lower()
             if dxcc and band:
-                mults.add(f"{dxcc}:{band}")
+                mults.add("{}:{}".format(dxcc, band))
 
         elif mode == "locator_field":
             loc = q.get("locator", "").upper()
@@ -135,7 +135,7 @@ def score_log(qsos, contest_id, station_callsign="", station_locator="",
     """
     contest = CONTESTS.get(contest_id)
     if not contest:
-        return {"error": f"Concurs necunoscut: {contest_id}"}
+        return {"error": "Concurs necunoscut: {}".format(contest_id)}
 
     if qso_flags is None:
         qso_flags = {i: "ok" for i in range(len(qsos))}

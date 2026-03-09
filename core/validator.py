@@ -35,7 +35,7 @@ class ValidationError:
         }
 
     def __repr__(self):
-        return f"[{self.severity}] QSO#{self.qso_idx} {self.callsign}: {self.message}"
+        return "[{}] QSO#{} {}: {}".format(self.severity, self.qso_idx, self.callsign, self.message)
 
 
 # ── Validare RST ─────────────────────────────────────────────────
@@ -52,27 +52,27 @@ def _valid_rst(rst_str, mode):
     try:
         val = int(rst)
     except ValueError:
-        return False, f"RST '{rst}' nu este numeric"
+        return False, "RST '{}' nu este numeric".format(rst)
 
     if val < lo or val > hi:
-        return False, f"RST '{rst}' în afara intervalului {lo}–{hi} pentru {mode_up}"
+        return False, "RST '{}' în afara intervalului {}–{} pentru {}".format(rst, lo, hi, mode_up)
 
     # Verificare cifre individuale
     rst_s = str(val)
     if len(rst_s) == 2:  # SSB: readability(1-5) tone(1-9)
         r, t = int(rst_s[0]), int(rst_s[1])
         if r < 1 or r > 5:
-            return False, f"RST readability '{r}' invalid (1-5)"
+            return False, "RST readability '{}' invalid (1-5)".format(r)
         if t < 1 or t > 9:
-            return False, f"RST tone '{t}' invalid (1-9)"
+            return False, "RST tone '{}' invalid (1-9)".format(t)
     elif len(rst_s) == 3:  # CW: r(1-5) t(1-9) s(1-9)
         r, t, s = int(rst_s[0]), int(rst_s[1]), int(rst_s[2])
         if r < 1 or r > 5:
-            return False, f"RST readability '{r}' invalid (1-5)"
+            return False, "RST readability '{}' invalid (1-5)".format(r)
         if t < 1 or t > 9:
-            return False, f"RST tone '{t}' invalid (1-9)"
+            return False, "RST tone '{}' invalid (1-9)".format(t)
         if s < 1 or s > 9:
-            return False, f"RST strength '{s}' invalid (1-9)"
+            return False, "RST strength '{}' invalid (1-9)".format(s)
 
     return True, ""
 
@@ -87,10 +87,10 @@ def _valid_date(date_str):
         dt = datetime.datetime.strptime(d, "%Y-%m-%d")
         # Dată rezonabilă: 2000-01-01 — astăzi+1
         if dt.year < 2000 or dt > datetime.datetime.now() + datetime.timedelta(days=1):
-            return False, f"Dată suspectă: {d}"
+            return False, "Dată suspectă: {}".format(d)
         return True, ""
     except ValueError:
-        return False, f"Format dată invalid: '{d}' (așteptat YYYY-MM-DD)"
+        return False, "Format dată invalid: '{}' (așteptat YYYY-MM-DD)".format(d)
 
 
 # ── Validare oră ─────────────────────────────────────────────────
@@ -103,7 +103,7 @@ def _valid_time(time_str):
         datetime.datetime.strptime(t, "%H:%M")
         return True, ""
     except ValueError:
-        return False, f"Format oră invalid: '{t}' (așteptat HH:MM)"
+        return False, "Format oră invalid: '{}' (așteptat HH:MM)".format(t)
 
 
 # ── Validare indicativ ───────────────────────────────────────────
@@ -115,7 +115,7 @@ def _valid_callsign(call):
     if not call:
         return False, "Indicativ lipsă"
     if not _CALL_RE.match(call.upper()):
-        return False, f"Indicativ suspect: '{call}'"
+        return False, "Indicativ suspect: '{}'".format(call)
     return True, ""
 
 
@@ -127,9 +127,9 @@ def _valid_band_mode(band, mode, contest_id):
 
     errors = []
     if band and allowed_bands and band.lower() not in [b.lower() for b in allowed_bands]:
-        errors.append(f"Bandă '{band}' nepermisă în {contest.get('name', contest_id)}")
+        errors.append("Bandă '{}' nepermisă în {}".format(band, contest.get('name', contest_id)))
     if mode and allowed_modes and mode.upper() not in [m.upper() for m in allowed_modes]:
-        errors.append(f"Mod '{mode}' nepermis în {contest.get('name', contest_id)}")
+        errors.append("Mod '{}' nepermis în {}".format(mode, contest.get('name', contest_id)))
     return errors
 
 
@@ -185,10 +185,10 @@ def validate_log(qsos, contest_id=None, station_callsign=""):
                 ok, msg = _valid_rst(rst, mode)
                 if not ok:
                     q_errors.append(ValidationError(i, q.get("callsign","?"),
-                        "BAD_RST", f"{label}: {msg}", SEV_WARNING, field))
+                        "BAD_RST", "{}: {}".format(label, msg), SEV_WARNING, field))
             else:
                 q_errors.append(ValidationError(i, q.get("callsign","?"),
-                    "MISSING_RST", f"{label} lipsă", SEV_WARNING, field))
+                    "MISSING_RST", "{} lipsă".format(label), SEV_WARNING, field))
 
         # 3. Dată
         ok, msg = _valid_date(q.get("date", ""))
@@ -219,7 +219,7 @@ def validate_log(qsos, contest_id=None, station_callsign=""):
                         "MISSING_EXCHANGE", "Schimb (județ) lipsă", SEV_WARNING, "exchange"))
                 elif not is_valid_county(exch):
                     q_errors.append(ValidationError(i, q.get("callsign","?"),
-                        "BAD_COUNTY", f"Județ invalid: '{exch}'", SEV_WARNING, "exchange"))
+                        "BAD_COUNTY", "Județ invalid: '{}'".format(exch), SEV_WARNING, "exchange"))
 
         # Setare flag
         has_error   = any(e.severity == SEV_ERROR   for e in q_errors)
@@ -242,7 +242,7 @@ def validate_log(qsos, contest_id=None, station_callsign=""):
                 qso_flags[idx] = "duplicate"
             all_errors.append(ValidationError(
                 idx, call, "DUPLICATE",
-                f"Duplicat pe {band} (apare în QSO #{indices[0]+1} și #{idx+1})",
+                "Duplicat pe {} (apare în QSO #{} și #{})".format(band, indices[0]+1, idx+1),
                 SEV_ERROR, "callsign"
             ))
 
