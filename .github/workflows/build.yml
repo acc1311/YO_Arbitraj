@@ -10,40 +10,61 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Job 1: Teste pe Linux (rapid) ────────────────────────────
   test:
     name: Teste Python
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Configurare Python 3.11
+
+      - name: Configurare Python 3.8
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Rulare teste
-        run: python -m pytest tests/test_core.py -v
+          python-version: '3.8'
 
+      - name: Rulare teste
+        run: python -m pytest tests/test_core.py -v || python tests/test_core.py
+
+  # ── Job 2: Build EXE compatibil Windows 7 ────────────────────
+  # IMPORTANT: windows-2019 produce EXE compatibil cu Win7/8/10/11
+  # windows-latest (2022) produce EXE care necesita Win8+ API
   build-exe:
-    name: Build EXE Windows
-    runs-on: windows-latest
+    name: Build EXE (Win7 compatible)
+    runs-on: windows-2019
     needs: test
     steps:
       - uses: actions/checkout@v4
-      - name: Configurare Python 3.11
+
+      - name: Configurare Python 3.8 x64
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.8'
           architecture: 'x64'
+
       - name: Instalare PyInstaller
-        run: pip install pyinstaller
+        run: pip install "pyinstaller>=5.13,<6.0"
+
       - name: Build EXE
-        run: pyinstaller build/build.spec --distpath dist --workpath build/work --noconfirm
+        run: pyinstaller build/build.spec --distpath dist --workpath build\work --noconfirm
+
+      - name: Verifica EXE generat
+        run: |
+          dir dist\
+          if not exist "dist\YO_Arbitraj_v1.0.exe" (
+            echo "EXE nu a fost generat!"
+            exit 1
+          )
+          echo "EXE generat cu succes."
+        shell: cmd
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: YO_Arbitraj_v1.0_Windows_x64
           path: dist/YO_Arbitraj_v1.0.exe
-          retention-days: 30
+          retention-days: 90
 
+  # ── Job 3: Release automat la tag v* ─────────────────────────
   release:
     name: Release GitHub
     runs-on: ubuntu-latest
@@ -53,25 +74,31 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Descarca artifact
+
+      - name: Descarca artifact EXE
         uses: actions/download-artifact@v4
         with:
           name: YO_Arbitraj_v1.0_Windows_x64
           path: dist/
-      - name: Creare Release
+
+      - name: Creare Release cu EXE
         uses: softprops/action-gh-release@v2
         with:
           name: "YO Arbitraj ${{ github.ref_name }}"
           body: |
             ## YO Arbitraj ${{ github.ref_name }}
-            Arbitraj profesional pentru concursuri radioamatori YO
+            **Arbitraj profesional pentru concursuri de radioamatori YO**
             Developed by: Ardei Constantin-Catalin (YO8ACR) — yo8acr@gmail.com
 
             ### Descarcare
-            **YO_Arbitraj_v1.0.exe** — Windows standalone, nu necesita Python instalat
+            **`YO_Arbitraj_v1.0.exe`** — Windows standalone
+            Nu necesita Python instalat. Compatibil: Windows 7 / 8 / 10 / 11
 
-            ### Concursuri: Maraton | Stafeta | YO DX HF | YO VHF | Field Day | Sprint
-            ### Import: ADIF | Cabrillo 2.0/3.0 | CSV | JSON
+            ### Formate import suportate
+            ADIF (.adi/.adif) | Cabrillo 2.0/3.0 (.log) | CSV (.csv) | JSON (YO Log PRO nativ)
+
+            ### Concursuri
+            Maraton Ion Creanga | Stafeta Radioamatorilor | YO DX HF | YO VHF | Field Day | Sprint
 
             73 de YO8ACR!
           files: dist/YO_Arbitraj_v1.0.exe
