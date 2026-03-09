@@ -71,7 +71,7 @@ class YOArbitrajApp(tk.Tk):
         h  = min(860,  int(sh * 0.90))
         x  = (sw - w) // 2
         y  = (sh - h) // 2
-        self.geometry(f"{w}x{h}+{x}+{y}")
+        self.geometry("{}x{}+{}+{}".format(w, h, x, y))
         self.minsize(960, 600)
 
     # ── ttk Style ────────────────────────────────────────────────
@@ -111,7 +111,7 @@ class YOArbitrajApp(tk.Tk):
 
         # Tag-uri treeview
         for tag, color in STATUS_COLORS.items():
-            self.option_add(f"*Treeview.{tag}.background", color)
+            self.option_add("*Treeview.{}.background".format(tag), color)
 
     # ════════════════════════════════════════════════════════════
     #  BUILD UI
@@ -154,7 +154,7 @@ class YOArbitrajApp(tk.Tk):
         cf.pack(fill=tk.X, padx=6, pady=4)
 
         ttk.Label(cf, text="Concurs:").grid(row=0, column=0, sticky="w", padx=6, pady=3)
-        contests = [f"{v['name']}" for k,v in CONTESTS.items()]
+        contests = [v["name"] for k,v in CONTESTS.items()]
         self.contest_combo = ttk.Combobox(cf, values=contests, state="readonly", width=22)
         self.contest_combo.set(CONTESTS["maraton"]["name"])
         self.contest_combo.grid(row=0, column=1, padx=6, pady=3, sticky="ew")
@@ -437,14 +437,14 @@ class YOArbitrajApp(tk.Tk):
             ]
         )
         for fp in files:
-            self._set_status(f"Se importă: {os.path.basename(fp)}...")
+            self._set_status("Se importa: {}...".format(os.path.basename(fp)))
             self.update_idletasks()
             try:
                 result = parse_file(fp)
                 call   = result["callsign"] or os.path.splitext(os.path.basename(fp))[0].upper()
                 if call in self.loaded_logs:
                     if not messagebox.askyesno("Duplicat",
-                            f"Log-ul {call} există deja. Îl înlocuiți?"):
+                            "Log-ul {} exista deja. Il inlocuiti?".format(call)):
                         continue
                 self.loaded_logs[call] = result
                 errs = len(result["errors"])
@@ -457,8 +457,8 @@ class YOArbitrajApp(tk.Tk):
                     call, result["total"], result["format"].upper(), status
                 ))
                 self._set_status(
-                    f"✅ {call}: {result['total']} QSO-uri importate ({result['format'].upper()})"
-                    + (f" — {errs} erori de import" if errs else "")
+                    "OK {}: {} QSO-uri importate ({})".format(call, result["total"], result["format"].upper())
+                    + (" - {} erori de import".format(errs) if errs else "")
                 )
             except Exception as e:
                 messagebox.showerror("Eroare import", str(e))
@@ -521,7 +521,7 @@ class YOArbitrajApp(tk.Tk):
                 d = e.to_dict()
                 tag = d["severity"]
                 self.val_tree.insert("", "end", tags=(tag,), values=(
-                    d["qso_idx"]+1, f"{call}:{d['callsign']}",
+                    d["qso_idx"]+1, "{}:{}".format(call, d["callsign"]),
                     d["type"], d["message"], d["severity"], d.get("field","")
                 ))
 
@@ -529,15 +529,15 @@ class YOArbitrajApp(tk.Tk):
         lines = ["=== SUMAR VALIDARE ===\n"]
         for call, vr in self.val_results.items():
             lines.append(
-                f"  {call:<14} Total:{vr['valid_count']+vr['error_count']+vr['warning_count']:4d}"
-                f"  Valide:{vr['valid_count']:4d}  Erori:{vr['error_count']:3d}  Avertismente:{vr['warning_count']:3d}"
+                "  {:<14} Total:{:4d}".format(call, vr['valid_count']+vr['error_count']+vr['warning_count'])
+                + "  Valide:{:4d}  Erori:{:3d}  Avertismente:{:3d}".format(vr['valid_count'], vr['error_count'], vr['warning_count'])
             )
         self.val_summary.configure(state="normal")
         self.val_summary.delete("1.0", "end")
         self.val_summary.insert("end", "\n".join(lines))
         self.val_summary.configure(state="disabled")
 
-        self._set_status(f"Validare completă: {total_err} erori, {total_warn} avertismente")
+        self._set_status("Validare completa: {} erori, {} avertismente".format(total_err, total_warn))
         self.nb.select(self.tab_val)
         self._refresh_log_tab()
 
@@ -563,13 +563,9 @@ class YOArbitrajApp(tk.Tk):
 
         # Sumar
         txt = (
-            f"Cross-Check: {call_a} vs {call_b}  |  Toleranță: ±{tol} min\n"
-            f"Total QSO în A: {st['total_a']}  |  "
-            f"Confirmate: {st['confirmed']}  |  "
-            f"Neconfirmate: {st['unconfirmed']}\n"
-            f"Indicativ greșit: {st['busted_call']}  |  "
-            f"Bandă greșită: {st['busted_band']}  |  "
-            f"Timp greșit: {st['busted_time']}"
+            "Cross-Check: {} vs {}  |  Toleranta: +/-{} min\n".format(call_a, call_b, tol)
+            + "Total QSO in A: {}  |  Confirmate: {}  |  Neconfirmate: {}\n".format(st["total_a"], st["confirmed"], st["unconfirmed"])
+            + "Indicativ gresit: {}  |  Banda gresita: {}  |  Timp gresit: {}".format(st["busted_call"], st["busted_band"], st["busted_time"])
         )
         self.cc_summary.configure(state="normal")
         self.cc_summary.delete("1.0", "end")
@@ -589,7 +585,7 @@ class YOArbitrajApp(tk.Tk):
             ))
 
         self._set_status(
-            f"Cross-Check {call_a}↔{call_b}: {st['confirmed']} confirmate, {st['unconfirmed']} neconfirmate"
+            "Cross-Check {} vs {}: {} confirmate, {} neconfirmate".format(call_a, call_b, st["confirmed"], st["unconfirmed"])
         )
         self.nb.select(self.tab_cc)
 
@@ -620,13 +616,12 @@ class YOArbitrajApp(tk.Tk):
         first_call = list(self.score_results.keys())[0]
         sr = self.score_results[first_call]
         txt = (
-            f"=== SCOR: {sr['callsign']} — {sr['contest_name']} ===\n"
-            f"Total QSO: {sr['total_qsos']}  Valide: {sr['valid_qsos']}  "
-            f"Erori: {sr['error_qsos']}  Duplicate: {sr['duplicate_qsos']}\n"
-            f"Puncte QSO: {sr['qso_points']}  ×  Multiplicatori: {sr['multipliers']}\n"
-            f"══ SCOR FINAL: {sr['total_score']} ══\n"
-            f"Per bandă: " + "  ".join(
-                f"{b}:{d['points']}pct/{d['qsos']}qso"
+            "=== SCOR: {} - {} ===\n".format(sr["callsign"], sr["contest_name"])
+            + "Total QSO: {}  Valide: {}  Erori: {}  Duplicate: {}\n".format(sr["total_qsos"], sr["valid_qsos"], sr["error_qsos"], sr["duplicate_qsos"])
+            + "Puncte QSO: {}  x  Multiplicatori: {}\n".format(sr["qso_points"], sr["multipliers"])
+            + "SCOR FINAL: {} \n".format(sr["total_score"])
+            + "Per banda: " + "  ".join(
+                "{}:{}pct/{}qso".format(b, d["points"], d["qsos"])
                 for b, d in sorted(sr["per_band"].items())
             )
         )
@@ -642,13 +637,13 @@ class YOArbitrajApp(tk.Tk):
         for r in self.ranking:
             tag = tag_map.get(r["position"], "")
             self.rank_tree.insert("", "end", tags=(tag,) if tag else (), values=(
-                f"#{r['position']}", r["callsign"],
+                "#{}".format(r["position"]), r["callsign"],
                 r["total_qsos"], r["valid_qsos"], r["error_qsos"],
                 r["duplicate_qsos"], r["qso_points"],
                 r["multipliers"], r["total_score"]
             ))
 
-        self._set_status(f"Scor calculat: {len(self.ranking)} participanți clasați")
+        self._set_status("Scor calculat: {} participanti clasati".format(len(self.ranking)))
         self.nb.select(self.tab_score)
         self._refresh_log_tab()
 
@@ -709,7 +704,7 @@ class YOArbitrajApp(tk.Tk):
         self.band_filter["values"] = all_bands
 
         self.qso_count_lbl.configure(
-            text=f"{count}/{len(pr['qsos'])} QSO-uri"
+            text="{}/{} QSO-uri".format(count, len(pr["qsos"]))
         )
 
     def _sort_qso_tree(self, col):
@@ -737,8 +732,8 @@ class YOArbitrajApp(tk.Tk):
         ext_map = {"html": ".html", "csv": ".csv", "txt": ".txt", "json": ".json"}
         fp = filedialog.asksaveasfilename(
             defaultextension=ext_map.get(fmt, ".txt"),
-            initialfile=f"Arbitraj_{call}_{self.contest_id.get()}",
-            filetypes=[(fmt.upper(), f"*{ext_map.get(fmt,'')}")])
+            initialfile="Arbitraj_{}_{}".format(call, self.contest_id.get()),
+            filetypes=[(fmt.upper(), "*{}".format(ext_map.get(fmt, "")))])
         if not fp:
             return
 
@@ -754,9 +749,9 @@ class YOArbitrajApp(tk.Tk):
                 export_txt(sr, vr, fp)
             elif fmt == "json":
                 export_json(sr, vr, fp)
-            self._set_status(f"✅ Raport exportat: {fp}")
+            self._set_status("Raport exportat: {}".format(fp))
             import webbrowser
             if fmt == "html" and messagebox.askyesno("Export", "Deschideți raportul în browser?"):
-                webbrowser.open(f"file://{os.path.abspath(fp)}")
+                webbrowser.open("file://{}".format(os.path.abspath(fp)))
         except Exception as e:
             messagebox.showerror("Eroare export", str(e))
