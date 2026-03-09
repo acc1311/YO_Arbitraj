@@ -259,25 +259,25 @@ def export_txt(score_result, validation_result, filepath):
     sep = "-" * 70
 
     lines += [SEP, "  YO ARBITRAJ — RAPORT DE ARBITRAJ", SEP]
-    lines += [f"  Generat:   {_NOW()}"]
-    lines += [f"  Concurs:   {score_result.get('contest_name','—')}"]
-    lines += [f"  Indicativ: {score_result.get('callsign','—')}"]
+    lines += ["  Generat:   {}".format(_NOW())]
+    lines += ["  Concurs:   {}".format(score_result.get("contest_name", "-"))]
+    lines += ["  Indicativ: {}".format(score_result.get("callsign", "-"))]
     lines += [sep]
-    lines += [f"  Total QSO:        {score_result.get('total_qsos',0)}"]
-    lines += [f"  QSO Valide:       {score_result.get('valid_qsos',0)}"]
-    lines += [f"  Erori:            {score_result.get('error_qsos',0)}"]
-    lines += [f"  Duplicate:        {score_result.get('duplicate_qsos',0)}"]
-    lines += [f"  Puncte QSO:       {score_result.get('qso_points',0)}"]
-    lines += [f"  Multiplicatori:   {score_result.get('multipliers',0)}"]
-    lines += [f"  SCOR FINAL:       {score_result.get('total_score',0)}"]
+    lines += ["  Total QSO:        {}".format(score_result.get("total_qsos", 0))]
+    lines += ["  QSO Valide:       {}".format(score_result.get("valid_qsos", 0))]
+    lines += ["  Erori:            {}".format(score_result.get("error_qsos", 0))]
+    lines += ["  Duplicate:        {}".format(score_result.get("duplicate_qsos", 0))]
+    lines += ["  Puncte QSO:       {}".format(score_result.get("qso_points", 0))]
+    lines += ["  Multiplicatori:   {}".format(score_result.get("multipliers", 0))]
+    lines += ["  SCOR FINAL:       {}".format(score_result.get("total_score", 0))]
     lines += [SEP, ""]
 
     # Per bandă
     lines += ["PER BANDĂ:", sep]
-    lines += [f"  {'Bandă':<8} {'QSO':>6} {'Puncte':>8}"]
+    lines += ["  {:<8} {:>6} {:>8}".format("Banda", "QSO", "Puncte")]
     lines += [sep]
     for band, bd in sorted(score_result.get("per_band", {}).items()):
-        lines += [f"  {band:<8} {bd['qsos']:>6} {bd['points']:>8}"]
+        lines += ["  {:<8} {:>6} {:>8}".format(band, bd['qsos'], bd['points'])]
     lines += [""]
 
     # Erori
@@ -286,7 +286,7 @@ def export_txt(score_result, validation_result, filepath):
         lines += ["ERORI VALIDARE:", sep]
         for e in errs:
             d = e.to_dict() if hasattr(e, "to_dict") else e
-            lines += [f"  [{d['severity']:7}] QSO#{d['qso_idx']+1:4d} {d['callsign']:<12} {d['type']:<20} {d['message']}"]
+            lines += ["  [{:7}] QSO#{:4d} {:<12} {:<20} {}".format(d['severity'], d['qso_idx']+1, d['callsign'], d['type'], d['message'])]
         lines += [""]
 
     lines += [SEP, "  YO Arbitraj v1.0 — YO8ACR | yo8acr@gmail.com", SEP]
